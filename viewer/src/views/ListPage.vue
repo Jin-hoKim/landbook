@@ -61,14 +61,52 @@
       </div>
     </div>
 
-    <!-- 에러 -->
+    <!-- 빈 상태 (에러 또는 리포트 0개) -->
     <div
-      v-else-if="error"
-      class="flex items-center justify-center"
-      style="height: 50vh;"
+      v-else-if="error || reports.length === 0"
+      class="flex flex-col items-center justify-center"
+      style="height: 60vh;"
     >
-      <div style="color: var(--text-on-dark-secondary); font-size: 14px;">
-        {{ error }}
+      <div
+        :style="{
+          fontFamily: '\'Playfair Display\', serif',
+          fontSize: 'clamp(80px, 14vw, 160px)',
+          fontWeight: 300,
+          lineHeight: 1,
+          color: 'rgba(255,255,255,0.04)',
+          marginBottom: '32px',
+        }"
+      >
+        LANDBOOK
+      </div>
+      <div
+        :style="{
+          width: '60px',
+          height: '1px',
+          background: 'var(--accent-copper)',
+          marginBottom: '24px',
+        }"
+      />
+      <div
+        :style="{
+          fontFamily: '\'Cormorant Garamond\', serif',
+          fontSize: '14px',
+          letterSpacing: '0.25em',
+          color: 'var(--text-on-dark-secondary)',
+          fontWeight: 600,
+          textAlign: 'center',
+        }"
+      >
+        {{ reports.length === 0 && !error ? '등록된 리포트가 없습니다' : '리포트를 불러올 수 없습니다' }}
+      </div>
+      <div
+        class="mt-3"
+        :style="{
+          fontSize: '13px',
+          color: 'rgba(255,255,255,0.15)',
+        }"
+      >
+        JWORKS 부동산 컨설팅
       </div>
     </div>
 

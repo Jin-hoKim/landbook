@@ -20,7 +20,7 @@ export function useReport() {
     error.value = null;
     try {
       const res = await fetch(`/api/viewer/${token}`);
-      if (!res.ok) throw new Error(`리포트 로딩 실패 (${res.status})`);
+      if (!res.ok) throw new Error('report_not_found');
       report.value = await res.json();
     } catch (err) {
       error.value = err.message;
@@ -36,8 +36,8 @@ export function useReport() {
     loading.value = true;
     error.value = null;
     try {
-      const res = await fetch('/api/viewer/reports');
-      if (!res.ok) throw new Error(`목록 로딩 실패 (${res.status})`);
+      const res = await fetch('/api/viewer/public');
+      if (!res.ok) throw new Error('loading_failed');
       reports.value = await res.json();
     } catch (err) {
       error.value = err.message;
