@@ -85,13 +85,13 @@ const adminDist = path.join(__dirname, '..', 'admin', 'dist');
 
 // 관리자 SPA
 app.use('/admin', express.static(adminDist));
-app.get('/admin/*', (req, res) => {
+app.get('/admin/{*rest}', (req, res) => {
   res.sendFile(path.join(adminDist, 'index.html'));
 });
 
 // 뷰어 SPA (가장 마지막에 마운트)
 app.use(express.static(viewerDist));
-app.get('*', (req, res) => {
+app.use((req, res) => {
   // API나 이미 처리된 경로는 건너뛰기
   if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.startsWith('/og/')) {
     return res.status(404).json({ error: 'Not Found' });
