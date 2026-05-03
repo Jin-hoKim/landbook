@@ -1,18 +1,22 @@
 const crypto = require('crypto');
 const config = require('../config');
 
-function generateSignature(apiKey, apiSecret, timestamp) {
-  return crypto
+function generateAuthHeader(apiKey, apiSecret) {
+  const date = new Date().toISOString();
+  const salt = crypto.randomBytes(32).toString('hex');
+  const signature = crypto
     .createHmac('sha256', apiSecret)
-    .update(timestamp + apiKey)
+    .update(date + salt)
     .digest('hex');
+  return `HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
 }
 
 async function sendSms(recipients, message) {
-  if (!config.solapi.apiKey) throw new Error('솔라피 API 키가 설정되지 않았습니다');
+  if (!config.solapi.apiKey || !config.solapi.apiSecret) {
+    throw new Error('솔라피 API 키가 설정되지 않았습니다');
+  }
 
-  const timestamp = new Date().toISOString();
-  const signature = generateSignature(config.solapi.apiKey, config.solapi.apiSecret, timestamp);
+  const auth = generateAuthHeader(config.solapi.apiKey, config.solapi.apiSecret);
 
   const messages = recipients.map(phone => ({
     to: phone.replace(/-/g, ''),
@@ -26,7 +30,7 @@ async function sendSms(recipients, message) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `HMAC-SHA256 apiKey=${config.solapi.apiKey}, date=${timestamp}, signature=${signature}`,
+        'Authorization': auth,
       },
       body: JSON.stringify({ messages }),
     });
