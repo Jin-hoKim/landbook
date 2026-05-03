@@ -10,10 +10,10 @@ module.exports = {
   adminPassword: process.env.ADMIN_PASSWORD || 'admin1234',
   uploadDir: process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads'),
   maxZipSize: parseInt(process.env.MAX_ZIP_SIZE) || 100 * 1024 * 1024,
-  aligo: {
-    apiKey: process.env.ALIGO_API_KEY,
-    userId: process.env.ALIGO_USER_ID,
-    sender: process.env.ALIGO_SENDER,
+  solapi: {
+    apiKey: process.env.SOLAPI_API_KEY,
+    apiSecret: process.env.SOLAPI_API_SECRET,
+    sender: process.env.SOLAPI_SENDER,
   },
   smtp: {
     host: process.env.SMTP_HOST,

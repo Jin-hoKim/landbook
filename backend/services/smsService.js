@@ -1,49 +1,58 @@
-const https = require('https');
-const querystring = require('querystring');
+const crypto = require('crypto');
 const config = require('../config');
 
-async function sendSms(recipients, message) {
-  if (!config.aligo.apiKey) throw new Error('알리고 API 키가 설정되지 않았습니다');
+function generateSignature(apiKey, apiSecret, timestamp) {
+  return crypto
+    .createHmac('sha256', apiSecret)
+    .update(timestamp + apiKey)
+    .digest('hex');
+}
 
-  const results = [];
-  for (const phone of recipients) {
-    const data = querystring.stringify({
-      key: config.aligo.apiKey,
-      user_id: config.aligo.userId,
-      sender: config.aligo.sender,
-      receiver: phone.replace(/-/g, ''),
-      msg: message,
-      msg_type: 'LMS',
+async function sendSms(recipients, message) {
+  if (!config.solapi.apiKey) throw new Error('솔라피 API 키가 설정되지 않았습니다');
+
+  const timestamp = new Date().toISOString();
+  const signature = generateSignature(config.solapi.apiKey, config.solapi.apiSecret, timestamp);
+
+  const messages = recipients.map(phone => ({
+    to: phone.replace(/-/g, ''),
+    from: config.solapi.sender,
+    text: message,
+    type: 'LMS',
+  }));
+
+  try {
+    const res = await fetch('https://api.solapi.com/messages/v4/send-many', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `HMAC-SHA256 apiKey=${config.solapi.apiKey}, date=${timestamp}, signature=${signature}`,
+      },
+      body: JSON.stringify({ messages }),
     });
 
-    try {
-      const result = await new Promise((resolve, reject) => {
-        const req = https.request({
-          hostname: 'apis.aligo.in',
-          path: '/send/',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(data),
-          },
-        }, res => {
-          let body = '';
-          res.on('data', chunk => body += chunk);
-          res.on('end', () => {
-            try { resolve(JSON.parse(body)); }
-            catch { resolve({ result_code: -1, message: body }); }
-          });
-        });
-        req.on('error', reject);
-        req.write(data);
-        req.end();
-      });
-      results.push({ phone, success: result.result_code === 1, result });
-    } catch (err) {
-      results.push({ phone, success: false, error: err.message });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return recipients.map(phone => ({
+        phone,
+        success: false,
+        error: data.errorMessage || data.message || '발송 실패',
+      }));
     }
+
+    return recipients.map(phone => ({
+      phone,
+      success: true,
+      result: data,
+    }));
+  } catch (err) {
+    return recipients.map(phone => ({
+      phone,
+      success: false,
+      error: err.message,
+    }));
   }
-  return results;
 }
 
 module.exports = { sendSms };
